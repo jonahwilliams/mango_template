@@ -98,11 +98,12 @@ enum ScannerState {
 
 /// A scanner generates a token stream from a source string.
 class Scanner {
-  Scanner(this._source) {
+  Scanner(this.source) {
     _head = _current;
   }
 
-  final List<int> _source;
+  /// The source string as bytes.
+  final List<int> source;
 
   Token _current = Token(-1, 0, TokenKind.Beginning);
   Token _head;
@@ -118,6 +119,11 @@ class Scanner {
   /// The current tail of the token stream.
   Token get current => _current;
 
+  /// Retrieve a substring from the source buffer.
+  String getSubstring(int start, int end) {
+    return String.fromCharCodes(source, start, end);
+  }
+
   /// Scan all tokens.
   ///
   /// This is useful for most consumers of the token stream.
@@ -130,12 +136,12 @@ class Scanner {
   /// This is useful when the state of the scanner needs to be mutated
   /// depending on how tokens are scanned.
   bool scanNext() {
-    if (_offset >= _source.length) {
+    if (_offset >= source.length) {
       _addBufferedToken();
       assert(_bufferedOffset == -1);
       return false;
     }
-    int char = _source[_offset];
+    int char = source[_offset];
     switch (_state) {
       // Parsing outside of a directive or tag.
       case ScannerState.Outside:
@@ -285,8 +291,8 @@ class Scanner {
   }
 
   int _peek() {
-    if (_offset + 1 < _source.length) {
-      return _source[_offset + 1];
+    if (_offset + 1 < source.length) {
+      return source[_offset + 1];
     }
     return null;
   }
@@ -294,6 +300,6 @@ class Scanner {
   /// End scanning with a fatal error.
   void _fatal() {
     _addToken(Token(-1, -1, TokenKind.Error));
-    _offset = _source.length;
+    _offset = source.length;
   }
 }

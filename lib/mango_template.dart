@@ -14,5 +14,6 @@
 
 export 'src/ast.dart';
 export 'src/directive.dart';
+export 'src/parser.dart';
 export 'src/scanner.dart';
 

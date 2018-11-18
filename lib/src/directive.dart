@@ -42,7 +42,7 @@ class DirectiveParser {
   DirectiveNode parse() {
     // consume whitespace.
     while (_current == $space) {
-      _offset++;
+      _offset += 1;
     }
     if (_current == $slash) {
       _offset += 1;
@@ -57,40 +57,40 @@ class DirectiveParser {
       _offset += 1;
       if (_expect('if')) {
         while (_current == $space) {
-          _offset++;
+          _offset += 1;
         }
         final int identifierStart = start + _offset;
         while (_offset + start < end && _current != $space) {
           _offset += 1;
         }
-        final String identifier =
-            String.fromCharCodes(source.sublist(identifierStart, _offset));
+        final identifier = String.fromCharCodes(
+            source.sublist(identifierStart, start + _offset));
         return DirectiveNode(identifier: identifier, kind: DirectiveKind.If);
       } else if (_expect('for')) {
         while (_current == $space) {
-          _offset++;
+          _offset += 1;
         }
         final int localStart = start + _offset;
         while (_offset + start < end && _current != $space) {
           _offset += 1;
         }
-        final String local =
-            String.fromCharCodes(source.sublist(localStart, _offset));
+        final local = String.fromCharCodes(
+            source.sublist(localStart, start + _offset));
         while (_current == $space) {
-          _offset++;
+          _offset += 1;
         }
         if (!_expect('in')) {
           throw StateError('Unknown directive');
         }
         while (_current == $space) {
-          _offset++;
+          _offset += 1;
         }
-        final int identifierStart = start + _offset;
+        final identifierStart = start + _offset;
         while (_offset + start < end && _current != $space) {
           _offset += 1;
         }
-        final String identifier =
-            String.fromCharCodes(source.sublist(identifierStart, _offset));
+        final identifier = String.fromCharCodes(
+            source.sublist(identifierStart, start + _offset));
         return DirectiveNode(
           identifier: identifier,
           local: local,
@@ -104,8 +104,8 @@ class DirectiveParser {
       while (_offset + start < end && _current != $space) {
         _offset += 1;
       }
-      final String identifier =
-          String.fromCharCodes(source.sublist(identifierStart, _offset));
+      final identifier = String.fromCharCodes(
+          source.sublist(identifierStart, start + _offset));
       return DirectiveNode(
           identifier: identifier, kind: DirectiveKind.Interpolation);
     }

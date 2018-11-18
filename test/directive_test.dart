@@ -48,7 +48,7 @@ void main() {
           ));
     });
 
-    test('can parse an oepning if', () {
+    test('can parse an opening if', () {
       expect(
           DirectiveParser('#if bar'.runes.toList(), 0, 7).parse(),
           DirectiveNode(

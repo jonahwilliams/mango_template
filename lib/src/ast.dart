@@ -19,9 +19,6 @@ abstract class AstNodeVisitor<R, C> {
   /// A const constructor to allow subclasses to be const.
   const AstNodeVisitor();
 
-  /// Visit a [TextBlockNode].
-  R visitTextBlockNode(TextBlockNode node, C context);
-
   /// Visit a [TextNode].
   R visitTextNode(TextNode node, C context);
 
@@ -41,15 +38,6 @@ abstract class AstNode {
   const AstNode();
 }
 
-/// A block of one or more [TextNode] and [DirectiveNode].
-class TextBlockNode extends AstNode {
-  /// Creates a [TextBlockNode] from a list of children.
-  ///
-  /// Throws an [AssertionError] if `children` is null.
-  const TextBlockNode(this.children) : assert(children != null);
-
-  final List<AstNode> children;
-}
 
 /// A span of text within a [TextBlockNode].
 class TextNode extends AstNode {
@@ -66,6 +54,9 @@ class TextNode extends AstNode {
 
   @override
   bool operator ==(Object other) => other is TextNode && value == other.value;
+
+  @override
+  String toString() => value;
 }
 
 enum DirectiveKind {
@@ -109,6 +100,9 @@ class DirectiveNode extends AstNode {
       identifier == other.identifier &&
       kind == other.kind &&
       local == other.local;
+
+  @override
+  String toString() => 'Directive{$kind, $identifier, $local}';
 }
 
 /// An html element.
@@ -116,11 +110,13 @@ class ElementNode extends AstNode {
   /// Creates a new [ElementNode] from a `tag`.
   ///
   /// Throws an [AssertionError] if `tag` is null.
-  const ElementNode({
+  ElementNode({
     @required this.tag,
-    this.children = const <AstNode>[],
-    this.attributes = const <AttributeNode>[],
-  }) : assert(tag != null);
+    List<AstNode> children,
+    List<AttributeNode> attributes,
+  }) : assert(tag != null),
+       this.children = children ?? <AstNode>[],
+       this.attributes = attributes ?? <AttributeNode>[];
 
   /// The tag which defines this html element.
   ///
@@ -133,6 +129,9 @@ class ElementNode extends AstNode {
 
   /// The attributes on this element.
   final List<AttributeNode> attributes;
+
+  @override
+  String toString() => 'Element{$tag, $children}';
 }
 
 /// An html attribute.
