@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:mango_template/mango_template.dart';
+import 'package:mango_compiler/mango_compiler.dart';
 import 'package:test/test.dart';
 
 void main() {

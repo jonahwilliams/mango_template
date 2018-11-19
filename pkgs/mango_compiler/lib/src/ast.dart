@@ -36,8 +36,10 @@ abstract class AstNodeVisitor<R, C> {
 abstract class AstNode {
   /// A const constructor to allow subclasses to be const.
   const AstNode();
-}
 
+  /// Dispatch the visitor to the correct visit method.
+  R accept<R, C>(AstNodeVisitor<R, C> visitor, C context);
+}
 
 /// A span of text within a [TextBlockNode].
 class TextNode extends AstNode {
@@ -48,6 +50,10 @@ class TextNode extends AstNode {
 
   /// The contents of the text node.
   final String value;
+
+  @override
+  R accept<R, C>(AstNodeVisitor<R, C> visitor, C context) =>
+      visitor.visitTextNode(this, context);
 
   @override
   int get hashCode => value.hashCode;
@@ -76,7 +82,7 @@ class DirectiveNode extends AstNode {
     this.identifier,
     @required this.kind,
     this.local,
-  })  : assert(kind != null);
+  }) : assert(kind != null);
 
   /// The Dart identifier bound to this node.
   ///
@@ -90,6 +96,10 @@ class DirectiveNode extends AstNode {
 
   /// The kind of directive this ast node corresponds to.
   final DirectiveKind kind;
+
+  @override
+  R accept<R, C>(AstNodeVisitor<R, C> visitor, C context) =>
+      visitor.visitDirectiveNode(this, context);
 
   @override
   int get hashCode => identifier.hashCode ^ kind.hashCode ^ local.hashCode;
@@ -114,9 +124,9 @@ class ElementNode extends AstNode {
     @required this.tag,
     List<AstNode> children,
     List<AttributeNode> attributes,
-  }) : assert(tag != null),
-       this.children = children ?? <AstNode>[],
-       this.attributes = attributes ?? <AttributeNode>[];
+  })  : assert(tag != null),
+        this.children = children ?? <AstNode>[],
+        this.attributes = attributes ?? <AttributeNode>[];
 
   /// The tag which defines this html element.
   ///
@@ -131,6 +141,10 @@ class ElementNode extends AstNode {
   final List<AttributeNode> attributes;
 
   @override
+  R accept<R, C>(AstNodeVisitor<R, C> visitor, C context) =>
+      visitor.visitElementNode(this, context);
+
+  @override
   String toString() => 'Element{$tag, $children}';
 }
 
@@ -139,7 +153,9 @@ class AttributeNode extends AstNode {
   /// Creates a new [AttributeNode].
   ///
   /// Throws an [AssertionError] if `name` is null.
-  const AttributeNode({@required this.name, this.value}) : assert(name != null);
+  const AttributeNode(
+      {@required this.name, this.value, this.isInterpolated = false})
+      : assert(name != null);
 
   /// The name of the attribute, including any namespace.
   final String name;
@@ -148,6 +164,13 @@ class AttributeNode extends AstNode {
   ///
   /// If null, this corresponds to an attribute with no value.
   final String value;
+
+  /// Whether the value of this node is an interpolation and not a literal.
+  final bool isInterpolated;
+
+  @override
+  R accept<R, C>(AstNodeVisitor<R, C> visitor, C context) =>
+      visitor.visitAttributeNode(this, context);
 
   @override
   int get hashCode => name.hashCode ^ value.hashCode;

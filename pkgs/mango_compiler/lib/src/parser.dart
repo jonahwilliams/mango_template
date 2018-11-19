@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import 'attributes.dart';
 import 'ast.dart';
 import 'directive.dart';
 import 'scanner.dart';
@@ -20,17 +21,17 @@ class Parser {
   Parser(this.scanner);
 
   final Scanner scanner;
-  final List<AstNode> result = <AstNode>[];
+  final List<AstNode> _result = <AstNode>[];
   final List<ElementNode> _elementStack = <ElementNode>[];
   Token _current;
 
-  void parse() {
+  List<AstNode> parse() {
     scanner.scanAll();
     _current = scanner.head.next;
     while (_current != null) {
       switch (_current.kind) {
         case TokenKind.Error:
-          return;
+          return _result;
         case TokenKind.Text:
           _parseText();
           break;
@@ -45,9 +46,10 @@ class Parser {
           break;
         default:
           _fatal();
-          return;
+          return _result;
       }
     }
+    return _result;
   }
 
   void _parseText() {
@@ -55,7 +57,7 @@ class Parser {
         _current.offset, _current.offset + _current.length);
     // Trim newlines and empty space.
     if (value.isNotEmpty && value.trim().isNotEmpty) {
-      result.add(TextNode(value));
+      _result.add(TextNode(value));
     }
     _moveNext();
   }
@@ -70,7 +72,7 @@ class Parser {
       _current.offset,
       _current.offset + _current.length,
     );
-    result.add(directiveParser.parse());
+    _result.add(directiveParser.parse());
     _moveNext();
     if (_current.kind != TokenKind.EndDirective) {
       return _fatal();
@@ -86,23 +88,44 @@ class Parser {
     final tagName = scanner.getSubstring(
         _current.offset, _current.offset + _current.length);
     _moveNext();
+    if (isClosing) {
+      _parseTagEnd(tagName, true, null);
+    } else {
+      _parseTagBody(tagName);
+    }
+  }
+
+  void _parseTagBody(String tagName) {
+    final attributes = <AttributeNode>[];
+    while (_current.kind == TokenKind.AttributeContent) {
+      final parser = AttributeParser(
+          scanner.source, _current.offset, _current.offset + _current.length);
+      attributes.add(parser.parse());
+      _moveNext();
+    }
+    _parseTagEnd(tagName, false, attributes);
+  }
+
+  void _parseTagEnd(
+      String tagName, bool isClosing, List<AttributeNode> attributes) {
     if (_current.kind == TokenKind.CloseVoidTag) {
-      result.add(ElementNode(tag: tagName));
+      _result.add(ElementNode(tag: tagName));
       _moveNext();
     } else if (_current.kind == TokenKind.CloseTag) {
       if (!isClosing) {
-        final element = ElementNode(tag: tagName);
-        result.add(element);
+        final element = ElementNode(tag: tagName, attributes: attributes);
+        _result.add(element);
         _elementStack.add(element);
       } else {
+        assert(attributes == null);
         final needle = _elementStack.removeLast();
         if (needle.tag != tagName) {
           return _fatal();
         }
-        AstNode current = result.last;
+        AstNode current = _result.last;
         while (current != needle) {
-          needle.children.insert(0, result.removeLast());
-          current = result.last;
+          needle.children.insert(0, _result.removeLast());
+          current = _result.last;
         }
       }
       _moveNext();

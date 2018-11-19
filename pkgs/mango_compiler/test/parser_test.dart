@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:mango_template/mango_template.dart';
+import 'package:mango_compiler/mango_compiler.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -25,12 +25,10 @@ void main() {
 {{/if}}
 ''';
       final parser = Parser(Scanner(template.runes.toList()));
-      parser.parse();
-
-      expect(parser.result, [
-        matchesElement('div', [equals(TextNode('Hello, World'))]),
+      expect(parser.parse(), [
+        matchesElement('div', children: [equals(TextNode('Hello, World'))]),
         DirectiveNode(identifier: 'inCalifornia', kind: DirectiveKind.If),
-        matchesElement('p', [
+        matchesElement('p', children: [
           equals(TextNode('Sorry about the smoke ')),
           equals(DirectiveNode(
               identifier: 'name', kind: DirectiveKind.Interpolation)),
@@ -38,18 +36,42 @@ void main() {
         DirectiveNode(kind: DirectiveKind.EndIf),
       ]);
     });
+
+    test('can parse attributes', () {
+      final source = r'''
+<div attr1="bar" attr2="{{fiz}}"></div>
+'''
+          .runes
+          .toList();
+      final parser = Parser(Scanner(source));
+      expect(parser.parse(), [
+        matchesElement('div', attributes: [
+          equals(AttributeNode(name: 'attr1', value: 'bar')),
+          equals(AttributeNode(
+            name: 'attr2',
+            value: 'fiz',
+            isInterpolated: true,
+          )),
+        ])
+      ]);
+    });
   });
 }
 
-Matcher matchesElement(String tag, List<Matcher> children) {
-  return _ElementMatcher(tag, children);
+Matcher matchesElement(
+  String tag, {
+  List<Matcher> attributes = const [],
+  List<Matcher> children = const [],
+}) {
+  return _ElementMatcher(tag, children, attributes);
 }
 
 class _ElementMatcher extends Matcher {
-  _ElementMatcher(this.tag, this.children);
+  _ElementMatcher(this.tag, this.children, this.attributes);
 
   final String tag;
   final List<Matcher> children;
+  final List<Matcher> attributes;
 
   @override
   Description describe(Description description) => description;
@@ -67,6 +89,16 @@ class _ElementMatcher extends Matcher {
     }
     for (int i = 0; i < children.length; i++) {
       if (!children[i].matches(item.children[i], matchState)) {
+        return false;
+      }
+    }
+    if (item.attributes.length != attributes.length) {
+      matchState['error'] =
+          'Expected ${attributes.length} children, found ${item.attributes.length}';
+      return false;
+    }
+    for (int i = 0; i < attributes.length; i++) {
+      if (!attributes[i].matches(item.attributes[i], matchState)) {
         return false;
       }
     }

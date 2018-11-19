@@ -1,0 +1,16 @@
+name: mango
+description: A starting point for Dart libraries or applications.
+# version: 1.0.0
+# homepage: https://www.example.com
+# author: jonahwilliams <email@example.com>
+
+environment:
+  sdk: '>=2.0.0 <3.0.0'
+
+dependencies:
+  meta:
+  incremental_dom:
+    path: ../incremental_dom
+
+dev_dependencies:
+  test: ^1.0.0

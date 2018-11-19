@@ -235,6 +235,7 @@ class Scanner {
           switch (char) {
             // End of the token.
             case $slash:
+              _addBufferedToken();
               if (_peek() != $greater_than) {
                 _fatal();
                 return false;
@@ -244,12 +245,19 @@ class Scanner {
               _state = ScannerState.Outside;
               return true;
             case $greater_than:
+              _addBufferedToken();
               _addToken(Token(_offset, 1, TokenKind.CloseTag));
               _offset += 1;
               _state = ScannerState.Outside;
               return true;
+            case $space:
+              _addBufferedToken();
+              _offset += 1;
+              return true;
             default:
-              // TODO(jonahwilliams): support attributes.
+              if (_bufferedOffset == -1) {
+                _bufferedOffset = _offset;
+              }
               _offset += 1;
               return true;
           }
@@ -275,6 +283,9 @@ class Scanner {
         break;
       case ScannerState.ExpectingTagName:
         kind = TokenKind.TagName;
+        break;
+      case ScannerState.TagBody:
+        kind = TokenKind.AttributeContent;
         break;
       default:
         throw StateError(errorMessage);

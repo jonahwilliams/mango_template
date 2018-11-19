@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import 'package:mango_template/src/scanner.dart';
+import 'package:mango_compiler/mango_compiler.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -92,6 +92,18 @@ void main() {
         Token(0, 1, TokenKind.OpenTag),
         Token(1, 2, TokenKind.TagName),
         Token(3, 2, TokenKind.CloseVoidTag),
+      ]);
+    });
+
+    test('can scan a node with attributes', () {
+      final scanner = Scanner('<div attr1="foo" attr2="{{bar}}">'.runes.toList());
+      scanner.scanAll();
+      verifyTokens(scanner.head, [
+        Token(0, 1, TokenKind.OpenTag),
+        Token(1, 3, TokenKind.TagName),
+        Token(5, 11, TokenKind.AttributeContent),
+        Token(17, 15, TokenKind.AttributeContent),
+        Token(32, 1, TokenKind.CloseTag),
       ]);
     });
   });
